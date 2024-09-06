@@ -11,16 +11,30 @@
             margin-top: 50px;
             font-size: 24px;
         }
+        #clienteInfo {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
     </style>
 </head>
 <body>
     <div id="clienteInfo"></div>
 
     <script>
-        // Función para obtener el valor del parámetro
+        // Función para obtener el valor del parámetro de la URL
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
+        }
+
+        // Validar número de cliente (ejemplo de validación básica)
+        function isValidClientNumber(clientNumber) {
+            return /^[0-9]+$/.test(clientNumber); // Solo números
         }
 
         // Obtiene el valor del parámetro "numero_cliente"
@@ -28,7 +42,7 @@
 
         // Muestra el número de cliente en la página
         const clienteInfo = document.getElementById('clienteInfo');
-        if (numeroCliente) {
+        if (numeroCliente && isValidClientNumber(numeroCliente)) {
             clienteInfo.textContent = `Número de cliente: ${numeroCliente}`;
 
             // Envía una solicitud POST a la primera URL de Azure Logic Apps
@@ -48,9 +62,7 @@
                 return response.json();
             })
             .then(data => {
-                // Verifica que la respuesta contenga el campo "value"
                 if (data.value && Array.isArray(data.value)) {
-                    // Procesa la respuesta de la primera solicitud
                     const totalInvoiceAmount = data.value.reduce((sum, invoice) => sum + invoice.TotalInvoiceAmount, 0);
 
                     // Envía una segunda solicitud POST a la segunda URL de Azure Logic Apps con el total
@@ -76,14 +88,14 @@
             })
             .then(data => {
                 console.log('Respuesta de la segunda solicitud:', data);
-                clienteInfo.textContent += `\nImporte total enviado: ${data.Importe}`;
+                clienteInfo.innerHTML += `<p class="success">Importe total enviado: ${data.Importe}</p>`;
             })
             .catch(error => {
                 console.error('Error:', error);
-                clienteInfo.textContent += `\nError: ${error.message}`;
+                clienteInfo.innerHTML += `<p class="error">Error: ${error.message}</p>`;
             });
         } else {
-            clienteInfo.textContent = 'No se proporcionó un número de cliente.';
+            clienteInfo.textContent = 'No se proporcionó un número de cliente válido.';
         }
     </script>
 </body>
