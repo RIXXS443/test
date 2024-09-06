@@ -30,6 +30,44 @@
         const clienteInfo = document.getElementById('clienteInfo');
         if (numeroCliente) {
             clienteInfo.textContent = `Número de cliente: ${numeroCliente}`;
+
+            // Envía una solicitud POST a la URL de Azure Logic Apps
+            fetch('https://prod-15.westus.logic.azure.com/workflows/c56cd79374ca4842b8855d2da56db1f5/triggers/manual/paths/invoke/procesar_pedidos?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=4OvqO2euKVMjSPZRsukI6GNqktVVnpPQ0Hs5qUlq5oc', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Numero_Cliente: numeroCliente
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Procesa la respuesta de la API
+                const totalInvoiceAmount = data.value.reduce((sum, invoice) => sum + invoice.TotalInvoiceAmount, 0);
+
+                // Envía una segunda solicitud POST a la URL de Azure Logic Apps con el total
+                fetch('https://prod-66.westus.logic.azure.com/workflows/f8e056efefeb46e68d073e9be7ed89f6/triggers/manual/paths/invoke/recibir_json?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HBKan4Ka3nBenvjnMsXvUsR7IILZfVGb_uFGPrA8xk0', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        Numero_Cliente: numeroCliente,
+                        Importe: totalInvoiceAmount
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Respuesta de la segunda solicitud:', data);
+                })
+                .catch(error => {
+                    console.error('Error al enviar la segunda solicitud:', error);
+                });
+            })
+            .catch(error => {
+                console.error('Error al enviar la primera solicitud:', error);
+            });
         } else {
             clienteInfo.textContent = 'No se proporcionó un número de cliente.';
         }
