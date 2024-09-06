@@ -1,11 +1,42 @@
-pip install flask
-from flask import Flask, jsonify
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parámetro de URI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        p {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bienvenido a la Página del Cliente</h1>
+    <p id="clienteInfo"></p>
 
-app = Flask(__name__)
+    <script>
+        // Función para obtener el valor del parámetro de URI
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
 
-@app.route('/api/hello', methods=['GET'])
-def hello():
-    return jsonify({'message': 'Hello, World!'})
+        // Obtiene el número de cliente del parámetro de URI
+        const numeroCliente = getQueryParam('numero_cliente');
 
-if __name__ == '__main__':
-    app.run()
+        // Muestra el número de cliente en la página
+        const clienteInfo = document.getElementById('clienteInfo');
+        if (numeroCliente) {
+            clienteInfo.textContent = `El número de cliente es: ${numeroCliente}`;
+        } else {
+            clienteInfo.textContent = 'No se proporcionó un número de cliente.';
+        }
+    </script>
+</body>
+</html>
