@@ -41,33 +41,46 @@
                     Numero_Cliente: numeroCliente
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la solicitud a la API');
+                }
+                return response.json();
+            })
             .then(data => {
-                // Procesa la respuesta de la primera solicitud
-                const totalInvoiceAmount = data.value.reduce((sum, invoice) => sum + invoice.TotalInvoiceAmount, 0);
+                // Verifica que la respuesta contenga el campo "value"
+                if (data.value && Array.isArray(data.value)) {
+                    // Procesa la respuesta de la primera solicitud
+                    const totalInvoiceAmount = data.value.reduce((sum, invoice) => sum + invoice.TotalInvoiceAmount, 0);
 
-                // Envía una segunda solicitud POST a la segunda URL de Azure Logic Apps con el total
-                fetch('https://prod-66.westus.logic.azure.com/workflows/f8e056efefeb46e68d073e9be7ed89f6/triggers/manual/paths/invoke/recibir_json?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HBKan4Ka3nBenvjnMsXvUsR7IILZfVGb_uFGPrA8xk0', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        Numero_Cliente: numeroCliente,
-                        Importe: totalInvoiceAmount
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Respuesta de la segunda solicitud:', data);
-                    clienteInfo.textContent += `\nImporte total enviado: ${totalInvoiceAmount}`;
-                })
-                .catch(error => {
-                    console.error('Error al enviar la segunda solicitud:', error);
-                });
+                    // Envía una segunda solicitud POST a la segunda URL de Azure Logic Apps con el total
+                    return fetch('https://prod-66.westus.logic.azure.com/workflows/f8e056efefeb46e68d073e9be7ed89f6/triggers/manual/paths/invoke/recibir_json?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HBKan4Ka3nBenvjnMsXvUsR7IILZfVGb_uFGPrA8xk0', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            Numero_Cliente: numeroCliente,
+                            Importe: totalInvoiceAmount
+                        })
+                    });
+                } else {
+                    throw new Error('La respuesta no contiene datos válidos');
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al enviar la segunda solicitud');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta de la segunda solicitud:', data);
+                clienteInfo.textContent += `\nImporte total enviado: ${data.Importe}`;
             })
             .catch(error => {
-                console.error('Error al enviar la primera solicitud:', error);
+                console.error('Error:', error);
+                clienteInfo.textContent += `\nError: ${error.message}`;
             });
         } else {
             clienteInfo.textContent = 'No se proporcionó un número de cliente.';
