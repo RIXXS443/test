@@ -48,6 +48,7 @@
                 return response.json();
             })
             .then(data => {
+                console.log('Datos recibidos de la API:', data);
                 // Verifica que la respuesta contenga el campo "value"
                 if (data.value && Array.isArray(data.value)) {
                     // Procesa la respuesta de la primera solicitud
