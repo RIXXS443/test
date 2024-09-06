@@ -54,7 +54,16 @@
                     // Procesa la respuesta de la primera solicitud
                     const totalInvoiceAmount = data.value.reduce((sum, invoice) => sum + parseFloat(invoice.TotalInvoiceAmount), 0);
 
-                    // Envía una segunda solicitud POST a la segunda URL de Azure Logic Apps con el total
+                    // Formatea el importe total con puntos como separadores de miles y comas como decimales
+                    const importeFormateado = totalInvoiceAmount.toLocaleString('es-ES', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                        useGrouping: true,
+                        groupingSeparator: '.',
+                        decimalSeparator: ','
+                    });
+
+                    // Envía una segunda solicitud POST a la segunda URL de Azure Logic Apps con el total formateado
                     return fetch('https://prod-66.westus.logic.azure.com/workflows/f8e056efefeb46e68d073e9be7ed89f6/triggers/manual/paths/invoke/recibir_json?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HBKan4Ka3nBenvjnMsXvUsR7IILZfVGb_uFGPrA8xk0', {
                         method: 'POST',
                         headers: {
@@ -62,7 +71,7 @@
                         },
                         body: JSON.stringify({
                             Numero_Cliente: numeroCliente,
-                            Importe: totalInvoiceAmount
+                            Importe: importeFormateado
                         })
                     });
                 } else {
@@ -77,9 +86,7 @@
             })
             .then(data => {
                 console.log('Respuesta de la segunda solicitud:', data);
-                // Formatea el importe a un número con dos decimales
-                const importeFormateado = parseFloat(data.Importe).toFixed(2);
-                clienteInfo.textContent += `\nImporte total enviado: ${importeFormateado}`;
+                clienteInfo.textContent += `\nImporte total enviado: ${data.Importe}`;
             })
             .catch(error => {
                 console.error('Error:', error);
